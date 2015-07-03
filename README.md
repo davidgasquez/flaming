@@ -2,10 +2,9 @@
 --------
 A language compiler with C style syntax.
 
-[![GitHub license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/davidgasquez/flaming)
-[![Travis](https://img.shields.io/travis/joyent/node.svg)](https://github.com/davidgasquez/flaming)
-
 **Note**: *Flaming is still in the design stage. It's not working yet.*
+
+[![GitHub license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/davidgasquez/flaming)
 
 ## Features
 - Syntax inspired by C
