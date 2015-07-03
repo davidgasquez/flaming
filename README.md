@@ -1,4 +1,5 @@
-![flaming]http://i.imgur.com/G6qqK7r.png)
+![flaming](http://i.imgur.com/G6qqK7r.png)
+--------
 A language compiler with C style syntax.
 
 [![GitHub license](https://img.shields.io/github/license/mashape/apistatus.svg)]()
