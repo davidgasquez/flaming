@@ -1,4 +1,4 @@
-![flaming](http://i.imgur.com/G6qqK7r.png)
+![flaming](http://i.imgur.com/G6qqK7r.png?1)
 --------
 A language compiler with C style syntax.
 
