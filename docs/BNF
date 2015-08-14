@@ -1,0 +1,79 @@
+Copyright (c) 2015 David Gasquez - All Rights Reserved.
+
+<program> ::= <program_header> <block>;
+
+<program_header> ::= MAIN;
+
+<block> ::= <block_start> <local_var_declaration> <sub_programs_declaration>
+            <sentences> <block_end>;
+
+<sub_programs_declaration> ::= <sub_programs_declaration> <sub_program>
+                          | <sub_program>;
+
+<sub_program> ::= <subprogram_header> <block>;
+
+<local_var_declaration> ::= LVDS <local_var_declarations> LVDE;
+
+<subprogram_header> ::= TYPE ID LEFT_PAR <parameters> RIGHT_PAR;
+
+<parameters> ::= <parameters> TYPE ID COMMA
+               | TYPE ID;
+
+<block_start> ::= LEFT_BRACE;
+
+<block_end> ::= RIGHT_BRACE;
+
+<local_var_declarations> ::= <local_var_declarations> <var_declaration>
+                           | <var_declaration>;
+
+<var_declaration> ::= TYPE <var_list> SEMICOLON;
+
+<var_list> ::= <var_list> COMMA ID
+             | ID;
+
+<sentences> ::= <sentences> <sentence>
+              | <sentence>;
+
+<sentence> ::= <bloque>
+             | <assign>
+             | <if>
+             | <else>
+             | <while>
+             | <do_until>
+             | <input>
+             | <output>
+             | <return>;
+
+<assign> ::= ID ASSIGN <expression> SEMICOLON;
+
+<if> ::= IF LEFT_PAR <expression> RIGHT_PAR <sentence>;
+
+<else> ::= ELSE <sentence>;
+         |
+
+<while> ::= WHILE LEFT_PAR <expression> RIGHT_PAR <sentence>;
+
+<do_until> ::= DO <sentence> UNTIL LEFT_PAR <expression> RIGHT_PAR SEMICOLON;
+
+<input> ::= INPUT <var_list> SEMICOLON;
+
+<output> ::= OUPUT <expression_or_string_list> SEMICOLON;
+
+<expression_list> ::= <expression_list> COMMA <expression>
+                    | <expression>;
+
+<expression> ::= LEFT_PAR <expression> RIGHT_PAR
+               | <unary_operator> <expression>
+               | <expression> <binary_operator> <expression>
+               | <id_or_vector>
+               | <const>
+               | <function_call>;
+
+<function_call> ::= ID LEFT_PAR <expression_list> RIGHT_PAR;
+
+<const> ::= INT
+          | <float>
+          | BOOLEAN
+          | CHAR;
+
+<float> ::= INT "." INT;
