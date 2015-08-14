@@ -8,6 +8,6 @@ A language compiler with C style syntax.
 
 ## Features
 - Syntax inspired by C
-- Tokens in Spanish
+- Tokens in English
 - Native support to multidimensional arrays
 - Functional
