@@ -1,48 +1,56 @@
 Copyright (c) 2015 David Gasquez - All Rights Reserved.
 
+TODO: Add errors
+
 <program> ::= <program_header> <block>;
 
-<program_header> ::= MAIN;
+<program_header> ::= MAIN LEFT_PAR RIGHT_PAR;
 
-<block> ::= <block_start> <local_var_declaration> <sub_programs_declaration>
-            <sentences> <block_end>;
+<block> ::= LEFT_BRACE <local_var_declaration> <sub_programs_declaration> <sentences> RIGHT_BRACE
+          | LEFT_BRACE <local_var_declaration> <sentences> RIGHT_BRACE
+          | LEFT_BRACE <sub_programs_declaration> <sentences> RIGHT_BRACE
+          | LEFT_BRACE <sentences> RIGHT_BRACE
+          | LEFT_BRACE RIGHT_BRACE;
 
 <sub_programs_declaration> ::= <sub_programs_declaration> <sub_program>
-                          | <sub_program>;
+                             | <sub_program>;
 
 <sub_program> ::= <subprogram_header> <block>;
 
-<local_var_declaration> ::= LVDS <local_var_declarations> LVDE;
+<subprogram_header> ::= TYPE ID LEFT_PAR <parameters> RIGHT_PAR
+                      | TYPE ID LEFT_PAR RIGHT_PAR;
 
-<subprogram_header> ::= TYPE ID LEFT_PAR <parameters> RIGHT_PAR;
-
-<parameters> ::= <parameters> TYPE ID COMMA
+<parameters> ::= <parameters> COMMA TYPE ID
                | TYPE ID;
 
-<block_start> ::= LEFT_BRACE;
-
-<block_end> ::= RIGHT_BRACE;
+<local_var_declaration> ::= LVDS <local_var_declarations> LVDE;
 
 <local_var_declarations> ::= <local_var_declarations> <var_declaration>
                            | <var_declaration>;
 
 <var_declaration> ::= TYPE <var_list> SEMICOLON;
 
-<var_list> ::= <var_list> COMMA ID
-             | ID;
+<var_list> ::= <var_list> COMMA <id_or_array_id>
+             | <id_or_array_id>;
+
+<id_or_array_id> ::= ID
+                   | <array_id>;
+
+<array_id> ::= ID LEFT_BRACKET <const> RIGHT_BRACKET
+             | ID LEFT_BRACKET <const> COMMA <const> RIGHT_BRACKET;
 
 <sentences> ::= <sentences> <sentence>
               | <sentence>;
 
-<sentence> ::= <bloque>
+================================================================================
+
+<sentence> ::= <block>
              | <assign>
              | <if>
-             | <else>
              | <while>
              | <do_until>
              | <input>
-             | <output>
-             | <return>;
+             | <output>;
 
 <assign> ::= ID ASSIGN <expression> SEMICOLON;
 
