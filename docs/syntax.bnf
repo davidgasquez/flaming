@@ -15,7 +15,7 @@ TODO: Add errors
 <sub_programs_declaration> ::= <sub_programs_declaration> <sub_program>
                              | <sub_program>;
 
-<sub_program> ::= <subprogram_header> <block>;
+<sub_program> ::= <subprogram_header> <block> <return>;
 
 <subprogram_header> ::= TYPE ID LEFT_PAR <parameters> RIGHT_PAR
                       | TYPE ID LEFT_PAR RIGHT_PAR;
@@ -36,13 +36,11 @@ TODO: Add errors
 <id_or_array_id> ::= ID
                    | <array_id>;
 
-<array_id> ::= ID LEFT_BRACKET <const> RIGHT_BRACKET
-             | ID LEFT_BRACKET <const> COMMA <const> RIGHT_BRACKET;
+<array_id> ::= ID LEFT_BRACKET <constant> RIGHT_BRACKET
+             | ID LEFT_BRACKET <constant> COMMA <constant> RIGHT_BRACKET;
 
 <sentences> ::= <sentences> <sentence>
               | <sentence>;
-
-================================================================================
 
 <sentence> ::= <block>
              | <assign>
@@ -50,14 +48,15 @@ TODO: Add errors
              | <while>
              | <do_until>
              | <input>
-             | <output>;
+             | <output>
+             | <return>;
 
 <assign> ::= ID ASSIGN <expression> SEMICOLON;
 
-<if> ::= IF LEFT_PAR <expression> RIGHT_PAR <sentence>;
+<if> ::= IF LEFT_PAR <expression> RIGHT_PAR <sentence>
+       | IF LEFT_PAR <expression> RIGHT_PAR <sentence> <else>;
 
 <else> ::= ELSE <sentence>;
-         |
 
 <while> ::= WHILE LEFT_PAR <expression> RIGHT_PAR <sentence>;
 
@@ -65,7 +64,9 @@ TODO: Add errors
 
 <input> ::= INPUT <var_list> SEMICOLON;
 
-<output> ::= OUPUT <expression_or_string_list> SEMICOLON;
+<output> ::= OUPUT <expression> SEMICOLON;
+
+<return> ::= RETURN <expression> SEMICOLON;
 
 <expression_list> ::= <expression_list> COMMA <expression>
                     | <expression>;
@@ -73,15 +74,15 @@ TODO: Add errors
 <expression> ::= LEFT_PAR <expression> RIGHT_PAR
                | <unary_operator> <expression>
                | <expression> <binary_operator> <expression>
-               | <id_or_vector>
-               | <const>
+               | <id_or_array_id>
+               | <constant>
                | <function_call>;
 
 <function_call> ::= ID LEFT_PAR <expression_list> RIGHT_PAR;
 
-<const> ::= INT
-          | <float>
-          | BOOLEAN
-          | CHAR;
+<constant> ::= INT
+             | <float>
+             | BOOLEAN
+             | CHAR;
 
-<float> ::= INT "." INT;
+<float> ::= INT DOT INT;
