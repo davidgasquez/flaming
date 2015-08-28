@@ -1,19 +1,21 @@
 %{
-#include "parser.h"
+#include <stdio.h>
+#include "parser.tab.h"
 %}
 
 %%
-"+"	    { return ADD;}
-"-"	    { return SUB;}
-"*"	    { return MUL;}
-"/"	    { return DIV;}
-"%"	    { return MOD;}
-"("     { return LPAREN;}
-")"     { return RPAREN;}
-[0-9]+  { return NUMBER;}
-\n	    { return EOL;}
-[ \t]   { /*ignore whitespace*/}
-.       { printf("Invalid Character:%c\n", *yytext); }
+
+[ \t]	;
+[0-9]+	{return T_NUMBER; }
+\n	{return T_NEWLINE;}
+"+"	{return T_PLUS;}
+"-"	{return T_MINUS;}
+"*"	{return T_MULTIPLY;}
+"/"	{return T_DIVIDE;}
+"("	{return T_LEFT;}
+")"	{return T_RIGHT;}
+"quit"	{return T_QUIT;}
+
 %%
 
 int yywrap(void){
