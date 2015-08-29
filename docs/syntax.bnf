@@ -36,8 +36,8 @@ TODO: Add errors
 <id_or_array_id> ::= ID
                    | <array_id>;
 
-<array_id> ::= ID LEFT_BRACKET <constant> RIGHT_BRACKET
-             | ID LEFT_BRACKET <constant> COMMA <constant> RIGHT_BRACKET;
+<array_id> ::= ID LEFT_BRACKET CONSTANT RIGHT_BRACKET
+             | ID LEFT_BRACKET CONSTANT COMMA CONSTANT RIGHT_BRACKET;
 
 <sentences> ::= <sentences> <sentence>
               | <sentence>;
@@ -72,17 +72,13 @@ TODO: Add errors
                     | <expression>;
 
 <expression> ::= LEFT_PAR <expression> RIGHT_PAR
-               | <unary_operator> <expression>
-               | <expression> <binary_operator> <expression>
+               | UNARY_OPERATOR <expression>
+               | <expression> BINARY_OPERATOR <expression>
+               | <expression> PLUS_OR_MINUS_OPERATOR <expression>
+               | PLUS_OR_MINUS_OPERATOR <expression>
                | <id_or_array_id>
-               | <constant>
+               | CONSTANT
+               | STRING
                | <function_call>;
 
 <function_call> ::= ID LEFT_PAR <expression_list> RIGHT_PAR;
-
-<constant> ::= INT
-             | <float>
-             | BOOLEAN
-             | CHAR;
-
-<float> ::= INT DOT INT;

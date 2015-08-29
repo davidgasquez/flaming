@@ -1,15 +1,21 @@
 
 all: flaming
-	 rm parser.tab.c lex.yy.c parser.tab.h
+	rm lex.yy.c parser.output  parser.tab.c  parser.tab.h main.o parser.tab.o
 
-parser.tab.c parser.tab.h:	parser.y
-	bison -d parser.y
+flaming: main.o parser.tab.o
+	gcc -o flaming main.o parser.tab.o -lfl
 
-lex.yy.c: scanner.l parser.tab.h
+parser.tab.o: parser.tab.c
+	gcc -c parser.tab.c
+
+main.o: main.cc
+	gcc -c main.cc
+
+parser.tab.c: parser.y lex.yy.c
+	bison -vd parser.y
+
+lex.yy.c: scanner.l
 	flex scanner.l
 
-flaming: lex.yy.c parser.tab.c parser.tab.h
-	gcc -o flaming parser.tab.c lex.yy.c -lfl
-
 clean:
-	rm flaming parser.tab.c lex.yy.c parser.tab.h
+	rm flaming lex.yy.c parser.output  parser.tab.c  parser.tab.h main.o parser.tab.o
