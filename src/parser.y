@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+int yyparse (void);
 void yyerror(const char* s);
 
 int current_line = 1;

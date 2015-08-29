@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+extern "C" int yyparse (void);
 extern FILE *yyin;
-int yyparse(void);
 
 FILE *open_file(int argc, char *argv[]) {
     FILE *f= NULL;
@@ -25,5 +25,5 @@ FILE *open_file(int argc, char *argv[]) {
 
 int main( int argc, char *argv[] ){
     yyin= open_file(argc,argv) ;
-    return yyparse() ;
+    return yyparse();
 }
