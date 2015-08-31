@@ -12,7 +12,7 @@ main.o: main.cc
 	gcc -c main.cc
 
 parser.tab.c: parser.y lex.yy.c
-	bison -vd parser.y
+	bison -vd --report=state parser.y
 
 lex.yy.c: scanner.l
 	flex -ll scanner.l

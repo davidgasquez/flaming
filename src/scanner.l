@@ -4,7 +4,7 @@
 
 %option noyywrap
 
-letter          [a-z]
+letter          [a-zA-Z]
 digit           [0-9]
 whitespace      [ \t]
 char            [^\"\""]
@@ -68,12 +68,12 @@ false           {return CONSTANT;}
 {digit}+\.{digit}+  {return CONSTANT;}
 "\'"{char}"\'"      {return CONSTANT;}
 "\""{char}+"\""     {return STRING;}
-{letter}+           {return ID;}
+{letter}[a-zA-Z0-9_]* {return ID;}
 {whitespace}+       {}
 \n                  {current_line++;}
 
 . {
-  fprintf(stderr,"\n(linea - %d) Error léxico: token %s\n",
+  fprintf(stderr,"Line %d. Lexic error: %s\n",
           current_line, yytext);
 }
 

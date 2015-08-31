@@ -4,26 +4,20 @@
 extern "C" int yyparse (void);
 extern FILE *yyin;
 
-FILE *open_file(int argc, char *argv[]) {
+FILE *open_input(int argc, char *argv[]) {
     FILE *f= NULL;
-    if ( argc > 1 )
-    {
-        f= fopen(argv[1],"r");
-        if (f==NULL)
-        {
-            fprintf(stderr,"fichero ’%s’ no encontrado\n",argv[1]);
+    if (argc > 1) {
+        f = fopen(argv[1],"r");
+        if (f==NULL) {
+            fprintf(stderr,"File ’%s’ not found\n",argv[1]);
             exit(1);
-        }
-        else
-            printf("leyendo fichero ’%s’.\n",argv[1]);
-    }
-    else
-        printf("leyendo entrada estándar.\n");
+        } else printf("Reading file: %s.\n",argv[1]);
+    } else printf("Reading standard input.\n");
 
-    return f ;
+    return f;
 }
 
 int main( int argc, char *argv[] ){
-    yyin= open_file(argc,argv) ;
+    yyin = open_input(argc,argv);
     return yyparse();
 }
