@@ -59,7 +59,7 @@ false           {return CONSTANT;}
 "else"          {return ELSE;}
 "while"         {return WHILE;}
 "do"            {return DO;}
-"until"            {return UNTIL;}
+"until"         {return UNTIL;}
 "input"         {return INPUT;}
 "output"        {return OUPUT;}
 "return"        {return RETURN;}

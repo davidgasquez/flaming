@@ -1,7 +1,5 @@
 Copyright (c) 2015 David Gasquez - All Rights Reserved.
 
-TODO: Add errors
-
 <program> ::= <program_header> <block>;
 
 <program_header> ::= MAIN LEFT_PAR RIGHT_PAR;

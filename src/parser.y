@@ -39,8 +39,8 @@ int current_line = 1;
 %token ID
 
 %left BINARY_OPERATOR
-%left PLUS_OR_MINUS_OPERATOR
 %right UNARY_OPERATOR
+%left PLUS_OR_MINUS_OPERATOR
 
 
 %%
@@ -66,17 +66,20 @@ subprogram_header : TYPE ID LEFT_PAR parameters RIGHT_PAR
                   | TYPE ID LEFT_PAR RIGHT_PAR;
 
 parameters : parameters COMMA TYPE ID
-           | TYPE ID;
+           | TYPE ID
+           | error;
 
 local_var_declaration : LVDS local_var_declarations LVDE;
 
 local_var_declarations : local_var_declarations var_declaration
                        | var_declaration;
 
-var_declaration : TYPE var_list SEMICOLON;
+var_declaration : TYPE var_list SEMICOLON
+                | error;
 
 var_list : var_list COMMA id_or_array_id
-         | id_or_array_id;
+         | id_or_array_id
+         | error;
 
 id_or_array_id : ID
                | array_id;
@@ -94,7 +97,8 @@ sentence : block
          | do_until
          | input
          | output
-         | return;
+         | return
+         | error;
 
 assign : ID ASSIGN expression SEMICOLON;
 
@@ -124,7 +128,15 @@ expression : LEFT_PAR expression RIGHT_PAR
            | id_or_array_id
            | CONSTANT
            | STRING
-           | function_call;
+           | aggregate
+           | function_call
+           | error;
+
+constants_list: constants_list COMMA CONSTANT
+              | constants_list SEMICOLON CONSTANT
+              | CONSTANT;
+
+aggregate : LEFT_BRACKET constants_list RIGHT_BRACKET;
 
 function_call : ID LEFT_PAR expression_list RIGHT_PAR;
 
@@ -134,5 +146,4 @@ function_call : ID LEFT_PAR expression_list RIGHT_PAR;
 
 void yyerror(const char* s) {
   fprintf(stderr, "Line %d. Parse error: %s\n", current_line, s);
-  exit(1);
 }

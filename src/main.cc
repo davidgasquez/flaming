@@ -11,8 +11,8 @@ FILE *open_input(int argc, char *argv[]) {
         if (f==NULL) {
             fprintf(stderr,"File ’%s’ not found\n",argv[1]);
             exit(1);
-        } else printf("Reading file: %s.\n",argv[1]);
-    } else printf("Reading standard input.\n");
+        } else printf("Reading file: %s.\n\n",argv[1]);
+    } else printf("Reading standard input.\n\n");
 
     return f;
 }
