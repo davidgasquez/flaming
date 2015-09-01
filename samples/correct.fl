@@ -1,53 +1,51 @@
 main(){
   LVDS
-    int ve,vv,bb,vvv;
-  	float vf,dd,ff;
-  	char vc;
-  	boolean vl;
-  	int iv[2],im[2,2];
-  	float fv[2],fm[2,2];
-  	char cv[2],cm[2,2];
-  	boolean bv[2],bm[2,2];
+    int a,b,c,d,vector[2],matrix[2,2];
+  	float e,f,g,h;
+  	char z, array[4];
+  	boolean x;
   LVDE
 
-  int functionA(int a1, float ac5c, char avv) {
+  int functionA(int a1, float a2, char a3) {
 		LVDS
 			int x1, x2;
 		LVDE
 
 		char functionB(char b1, boolean b2) {
 			LVDS
-				float xf, x2;
+				float y1, y2;
 			LVDE
 
-				float functionC(boolean c1, int c2) {
-					LVDS
-						float x1;
-					LVDE
+			float functionC(boolean c1, int c2) {
+				LVDS
+					float z1[3,3];
+          float z2;
+				LVDE
 
-					x1 = [1,2,3,4;5,2];
+        z1 = [1,2,3;4,5,6] + [1,2,3;4,5,6];
+        z2 = 3.14;
 
-					if(c2>10)
-						c2 = c2 - 1;
-					else
-						x1 = 3.1;
+				if(z2 > 10)
+					z2 = z2 - 1;
+				else
+					z2 = 10;
 
-					return x1;
-				}
+				return z2;
+			}
 
-			xf = functionC(true, 10);
-			x2 = xf * (functionC(false, 1) - functionC(true, 23)) / 10.0;
+			y1 = functionC(true, 10);
+			y2 = (functionC(false, 1) - functionC(true, 23)) / 10.0;
 
-			while(x2*functionC(false, 1) - xf < 10.0) {
-				x2 = x2 * xf;
+			while(y2 * functionC(false, 1) - y2 < 10.0) {
+				x2 = (x2 * 10) / (10 + 3) * 4 - 5;
         a = b + 5;
       }
 		}
 
 		float functionD(float d1) {
 			LVDS
-				char data;
-				int value;
+				char d1;
+				int d2;
 			LVDE
 
 			char functionE(char e1, char e2) {
@@ -59,13 +57,13 @@ main(){
 				else
 					return ' ';
 
-        do a + 10 * 1
-        until(a < 10);
+        do a + 10 * 1 until(a < 10);
 			}
 
       output "Write a number:";
-			input value;
-			if(d1 > 0.0){
+			input d2;
+
+			if(d2 > 0.0){
 				LVDS
 					int data;
 				LVDE
