@@ -5,6 +5,60 @@
 void yyerror(const char* s);
 
 int current_line = 1;
+int control_line;
+
+typedef enum {
+	formal_parameter,
+	mark,
+  conditional_mark,
+	function,
+	variable,
+} InputType;
+
+typedef enum {
+	t_int,
+	t_float,
+	t_char,
+	boolean,
+	array,
+	unknown,
+	unassigned,
+} DataType;
+
+typedef struct {
+	InputType input;
+	char *name;
+	DataType data_type;
+	unsigned int parameters;
+	unsigned int dimensions;
+	int dimension_size_1;
+	int dimension_size_2;
+} InputST;
+
+#define ST_MAX 500
+
+unsigned int top = 0, function_top;
+unsigned int sub_program = 0, var_declaration = 0;
+unsigned int dimensions, dimension_size_1, dimension_size_2;
+unsigned int func = 0, parameter_position = 0;
+char functionID[100];
+
+InputST ST[ST_MAX];
+
+DataType type_TMP, type_array;
+
+typedef struct {
+	int attribute;
+	char *lexeme;
+	DataType type;
+	DataType type_array;
+	unsigned int dimensions;
+	int dimension_size_1;
+	int dimension_size_2;
+} attributes;
+
+#define YYSTYPE attributes
+
 %}
 
 %error-verbose

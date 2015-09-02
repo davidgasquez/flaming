@@ -12,12 +12,13 @@ char            [^\"\""]
 %%;
 "main"          {return MAIN;}
 
-int             {return TYPE;}
-float           {return TYPE;}
-boolean         {return TYPE;}
-char            {return TYPE;}
-true            {return CONSTANT;}
-false           {return CONSTANT;}
+int             {yylval.type = t_int; return TYPE;}
+float           {yylval.type = t_float; return TYPE;}
+char            {yylval.type = t_char; return TYPE;}
+boolean         {yylval.type = boolean; return TYPE;}
+
+false           {yylval.lexeme = strdup (yytext); yylval.attribute = 0; yylval.type = boolean; return CONSTANT;}
+true            {yylval.lexeme = strdup (yytext); yylval.attribute = 1; yylval.type = boolean; return CONSTANT;}
 
 "("             {return LEFT_PAR;}
 ")"             {return RIGHT_PAR;}
@@ -32,45 +33,41 @@ false           {return CONSTANT;}
 ","             {return COMMA;}
 ";"             {return SEMICOLON;}
 "."             {return DOT;}
-"="             {return ASSIGN;}
+"="             {yylval.attribute = ASSIGN; return ASSIGN;}
 
-"!"             {return UNARY_OPERATOR;}
+"!"             {yylval.attribute = 0; yylval.type = boolean; return UNARY_OPERATOR;}
 
-"-"             {return PLUS_OR_MINUS_OPERATOR;}
-"+"             {return PLUS_OR_MINUS_OPERATOR;}
+"-"             {yylval.attribute = 0; yylval.type = t_int; return PLUS_OR_MINUS_OPERATOR;}
+"+"             {yylval.attribute = 1; yylval.type = t_int; return PLUS_OR_MINUS_OPERATOR;}
 
-"*"             {return BINARY_OPERATOR;}
-"/"             {return BINARY_OPERATOR;}
-"+="            {return BINARY_OPERATOR;}
-"-="            {return BINARY_OPERATOR;}
-"*="            {return BINARY_OPERATOR;}
-"/="            {return BINARY_OPERATOR;}
-">"             {return BINARY_OPERATOR;}
-"<"             {return BINARY_OPERATOR;}
-">="            {return BINARY_OPERATOR;}
-"<="            {return BINARY_OPERATOR;}
-"=="            {return BINARY_OPERATOR;}
-"!="            {return BINARY_OPERATOR;}
-"||"            {return BINARY_OPERATOR;}
-"&&"            {return BINARY_OPERATOR;}
-"**"            {return BINARY_OPERATOR;}
+"*"             {yylval.attribute = 0; yylval.type = t_int; return BINARY_OPERATOR;}
+"/"             {yylval.attribute = 1; yylval.type = t_int; return BINARY_OPERATOR;}
+">"             {yylval.attribute = 2; yylval.type = boolean; return BINARY_OPERATOR;}
+"<"             {yylval.attribute = 3; yylval.type = boolean; return BINARY_OPERATOR;}
+">="            {yylval.attribute = 4; yylval.type = boolean; return BINARY_OPERATOR;}
+"<="            {yylval.attribute = 5; yylval.type = boolean; return BINARY_OPERATOR;}
+"=="            {yylval.attribute = 6; yylval.type = boolean; return BINARY_OPERATOR;}
+"!="            {yylval.attribute = 7; yylval.type = boolean; return BINARY_OPERATOR;}
+"||"            {yylval.attribute = 8; yylval.type = boolean; return BINARY_OPERATOR;}
+"&&"            {yylval.attribute = 9; yylval.type = boolean; return BINARY_OPERATOR;}
+"**"            {yylval.attribute = 10; yylval.type = array; return BINARY_OPERATOR;}
 
-"if"            {return IF;}
+"if"            {control_line = current_line; return IF;}
 "else"          {return ELSE;}
-"while"         {return WHILE;}
+"while"         {control_line = current_line; return WHILE;}
 "do"            {return DO;}
-"until"         {return UNTIL;}
+"until"         {control_line = current_line; return UNTIL;}
 "input"         {return INPUT;}
 "output"        {return OUPUT;}
 "return"        {return RETURN;}
 
-{digit}+            {return CONSTANT;}
-{digit}+\.{digit}+  {return CONSTANT;}
-"\'"{char}"\'"      {return CONSTANT;}
-"\""{char}+"\""     {return STRING;}
-{letter}[a-zA-Z0-9_]* {return ID;}
-{whitespace}+       {}
-\n                  {current_line++;}
+{digit}+              {yylval.lexeme = strdup(yytext); yylval.attribute = CONSTANT; yylval.type = t_int; return CONSTANT;}
+{digit}+\.{digit}+    {yylval.lexeme = strdup(yytext); yylval.attribute = CONSTANT; yylval.type = t_float; return CONSTANT;}
+"\'"{char}"\'"        {yylval.lexeme = strdup(yytext); yylval.attribute = CONSTANT; yylval.type = t_char; return CONSTANT;}
+"\""{char}+"\""       {yylval.lexeme = strdup(yytext); yylval.attribute = CONSTANT; return STRING;}
+{letter}[a-zA-Z0-9_]* {yylval.lexeme = strdup(yytext); yylval.attribute = ID; return ID;}
+{whitespace}+         {}
+\n                    {current_line++;}
 
 . {
   fprintf(stderr,"Line %d. Lexic error: %s\n",
