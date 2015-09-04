@@ -5,15 +5,16 @@
 
 void yyerror(const char* s);
 
-int linea_actual = 1;
-int linea_control;
+int current_line = 1;
+int control_line;
+
 typedef enum {
-  marca,
-  marca_condicional,
-  funcion,
+  mark,
+  conditional_mark,
+  function,
   variable,
-  parametro_formal
-} tipoEntrada;
+  formal_parameter
+} input_type;
 typedef enum {
   entero,
   real,
@@ -22,166 +23,174 @@ typedef enum {
   lista,
   desconocido,
   no_asignado
-} dtipo;
+} type;
 typedef struct {
-  tipoEntrada entrada;
-  char *nombre;
-  dtipo tipoDato;
-  dtipo tipoDatoLista;
-  unsigned int parametros;
-} entradaTS;
+  input_type input;
+  char *name;
+  type data_type;
+  type data_type_array;
+  unsigned int parameters;
+} symbol_table;
 
-#define MAX_TS 500
-unsigned int TOPE = -1, topeF; /* Tope de la pila */
-unsigned int subProg = 0,
-             decVar = 0; /* Indicador de comienzo de bloque de un subprog */
-unsigned int func = 0, posParam = 0;
-char idFuncion[100];
-entradaTS TS[MAX_TS]; /* Pila de la tabla de símbolos */
-dtipo tipoTMP, tipoListaTMP;
+#define MAX_ST 500
+unsigned int top = -1, function_top; /* Tope de la pila */
+unsigned int sub_program = 0,
+             variable_declarations = 0; /* Indicador de comienzo de bloque de un subprog */
+unsigned int func = 0, param_position = 0;
+char function_id[100];
+symbol_table ST[MAX_ST]; /* Pila de la tabla de símbolos */
+
+type tmp_type, tmp_array_type;
 
 typedef struct {
-  int atrib;       /* Atributo del símbolo (si tiene) */
-  char *lexema;    /* Nombre del lexema */
-  dtipo tipo;      /* Tipo del símbolo */
-  dtipo tipoLista; /* Si tipo es lista, tipo de la lista */
-} atributos;
-#define YYSTYPE atributos /* A partir de ahora, cada símbolo tiene */
-                          /* una estructura de tipo atributos */
-/* Lista de funciones y procedimientos para manejo de la TS */
-void TS_InsertaMARCA() {
-  TOPE++;
-  if (subProg == 1) {
-    TS[TOPE].entrada = marca;
-    TS[TOPE].nombre = "MARCA_INICIAL";
-    int topeTMP = TOPE;
-    while (TS[topeTMP].entrada != funcion && topeTMP > 0) {
-      if (TS[topeTMP].entrada == parametro_formal) {
-        TOPE++;
-        TS[TOPE].entrada = variable;
-        TS[TOPE].nombre = TS[topeTMP].nombre;
-        TS[TOPE].tipoDato = TS[topeTMP].tipoDato;
-        if (TS[TOPE].tipoDato == lista)
-          TS[TOPE].tipoDatoLista = TS[topeTMP].tipoDatoLista;
+  int attribute;       /* Atributo del símbolo (si tiene) */
+  char *lexeme;    /* Nombre del lexeme */
+  type tipo;      /* Tipo del símbolo */
+  type type_array; /* Si tipo es lista, tipo de la lista */
+} attributes;
+#define YYSTYPE attributes /* A partir de ahora, cada símbolo tiene */
+                          /* una estructura de tipo attributes */
+
+
+void InsertMark() {
+  top++;
+  if (sub_program == 1) {
+    ST[top].input = mark;
+    ST[top].name = "start_mark";
+    int tmp_top = top;
+    while (ST[tmp_top].input != function && tmp_top > 0) {
+      if (ST[tmp_top].input == formal_parameter) {
+        top++;
+        ST[top].input = variable;
+        ST[top].name = ST[tmp_top].name;
+        ST[top].data_type = ST[tmp_top].data_type;
+        if (ST[top].data_type == lista)
+          ST[top].data_type_array = ST[tmp_top].data_type_array;
       }
-      topeTMP--;
+      tmp_top--;
     }
   } else {
-    TS[TOPE].entrada = marca_condicional;
-    TS[TOPE].nombre = "MARCA_CONDICIONAL";
+    ST[top].input = conditional_mark;
+    ST[top].name = "conditional_mark";
   }
 }
-void TS_VaciarENTRADAS() {
-  while (TS[TOPE].entrada != marca && TS[TOPE].entrada != marca_condicional) {
-    TOPE--;
+
+void EmptySymbolTable() {
+  while (ST[top].input != mark && ST[top].input != conditional_mark) {
+    top--;
   }
-  TOPE--;
+  top--;
 }
-int existeVar(atributos a) {
-  int topeTMP = TOPE;
-  while (topeTMP >= 0) {
-    // printf("%s %s\n", TS[topeTMP].nombre, a.lexema);
-    if (TS[topeTMP].entrada == variable &&
-        strcmp(TS[topeTMP].nombre, a.lexema) == 0) {
+
+int VariableExists(attributes a) {
+  int tmp_top = top;
+  while (tmp_top >= 0) {
+    if (ST[tmp_top].input == variable &&
+        strcmp(ST[tmp_top].name, a.lexeme) == 0) {
       return 1;
     }
-    topeTMP--;
+    tmp_top--;
   }
   return 0;
 }
-int existeID(atributos a) {
-  int topeTMP = TOPE;
-  while (TS[topeTMP].entrada != marca &&
-         TS[topeTMP].entrada != marca_condicional && topeTMP >= 0) {
-    if (strcmp(TS[topeTMP].nombre, a.lexema) == 0) {
+
+int ExistsID(attributes a) {
+  int tmp_top = top;
+  while (ST[tmp_top].input != mark &&
+         ST[tmp_top].input != conditional_mark && tmp_top >= 0) {
+    if (strcmp(ST[tmp_top].name, a.lexeme) == 0) {
       return 1;
     }
-    topeTMP--;
+    tmp_top--;
   }
   return 0;
 }
-void TS_InsertaIDENT(atributos a) {
-  // printf("%d\n", a.tipo);
-  if (existeID(a))
-    fprintf(stderr, "[Linea %d]: %s: existe.\n", linea_actual, a.lexema);
+
+void AddID(attributes a) {
+  if (ExistsID(a))
+    fprintf(stderr, "Line %d. Semantic error: '%s' already exists.\n", current_line, a.lexeme);
   else {
-    TOPE++;
-    TS[TOPE].entrada = variable;
-    TS[TOPE].nombre = a.lexema;
-    TS[TOPE].tipoDato = tipoTMP;
-    if (tipoTMP == lista) TS[TOPE].tipoDatoLista = tipoListaTMP;
+    top++;
+    ST[top].input = variable;
+    ST[top].name = a.lexeme;
+    ST[top].data_type = tmp_type;
+    if (tmp_type == lista) ST[top].data_type_array = tmp_array_type;
   }
-  // printf("ID: %s TIPO: %d\n", a.lexema, tipoTMP);
 }
-void TS_InsertaSUBPROG(atributos t, atributos a) {
-  TOPE++;
-  TS[TOPE].entrada = funcion;
-  TS[TOPE].nombre = a.lexema;
-  TS[TOPE].parametros = 0;
-  TS[TOPE].tipoDato = t.tipo;
+
+void AddSubProgram(attributes t, attributes a) {
+  top++;
+  ST[top].input = function;
+  ST[top].name = a.lexeme;
+  ST[top].parameters = 0;
+  ST[top].data_type = t.tipo;
 }
-void TS_InsertaPARAMF(atributos a) {
-  TOPE++;
-  TS[TOPE].entrada = parametro_formal;
-  TS[TOPE].nombre = a.lexema;
-  TS[TOPE].tipoDato = a.tipo;
-  if (a.tipo == lista) TS[TOPE].tipoDatoLista = a.tipoLista;
-  int topeTMP = TOPE;
-  while (TS[topeTMP].entrada != funcion && topeTMP >= 0) {
-    topeTMP--;
+
+void AddFormalParameter(attributes a) {
+  top++;
+
+  ST[top].input = formal_parameter;
+  ST[top].name = a.lexeme;
+  ST[top].data_type = a.tipo;
+
+  if (a.tipo == lista) {
+    ST[top].data_type_array = a.type_array;
   }
-  TS[topeTMP].parametros++;
+
+  int tmp_top = top;
+
+  while (ST[tmp_top].input != function && tmp_top >= 0) {
+    tmp_top--;
+  }
+
+  ST[tmp_top].parameters++;
 }
-void comprobarExprLogica(atributos a) {
+
+void CheckLogicExpression(attributes a) {
   if (a.tipo != booleano)
-    fprintf(stderr, "[Linea %d]: no hay expresion tipo logica.\n",
-            linea_control);
+    fprintf(stderr, "Line %d. Semantic error: Not a logical expression.\n",
+            control_line);
 }
-void comprobarExprLista(atributos a) {
-  if (a.tipo != lista)
-    fprintf(stderr, "[Linea %d]: el argumento no es de tipo lista.\n",
-            linea_actual);
-}
-unsigned int asignaTipo(atributos a) {
-  int topeTMP = TOPE;
+
+unsigned int AssignType(attributes a) {
+  int tmp_top = top;
   int existe = 0;
   unsigned int tipo = desconocido;
-  // printf("tipo=%d",a.tipo);
-  if (existeVar(a)) {
-    while (existe == 0 && topeTMP >= 0) {
-      if (!strcmp(TS[topeTMP].nombre, a.lexema)) {
+  if (VariableExists(a)) {
+    while (existe == 0 && tmp_top >= 0) {
+      if (!strcmp(ST[tmp_top].name, a.lexeme)) {
         existe = 1;
-        tipo = TS[topeTMP].tipoDato;
+        tipo = ST[tmp_top].data_type;
       }
-      topeTMP--;
+      tmp_top--;
     }
-    // printf("%s %d %d\n", a.lexema, a.tipo, tipo);
   } else
-    fprintf(stderr, "[Linea %d]: %s: no definida.\n", linea_actual, a.lexema);
+    fprintf(stderr, "Line %d. Semantic error: Variable '%s' not defined.\n", current_line, a.lexeme);
   return tipo;
 }
-unsigned int asignaTipoLista(atributos a) {
-  int topeTMP = TOPE;
-  int existe = 0;
+
+unsigned int AssignArrayType(attributes a) {
+  int tmp_top = top;
+  int exists = 0;
   unsigned int tipo = desconocido;
-  if (existeVar(a)) {
-    while (existe == 0 && topeTMP >= 0) {
-      if (!strcmp(TS[topeTMP].nombre, a.lexema)) {
-        existe = 1;
-        tipo = TS[topeTMP].tipoDatoLista;
+
+  if (VariableExists(a)) {
+    while (exists == 0 && tmp_top >= 0) {
+      if (!strcmp(ST[tmp_top].name, a.lexeme)) {
+        exists = 1;
+        tipo = ST[tmp_top].data_type_array;
       }
-      topeTMP--;
+      tmp_top--;
     }
   }
   return tipo;
 }
-unsigned int comprobarTipoASSIGN(atributos a, atributos op, atributos b) {
-  // printf("[Linea %d] %s %d | %s %d\n", linea_actual, a.lexema, asignaTipo(a),
-  // b.lexema, b.tipo);
+
+unsigned int CheckAssignType(attributes a, attributes op, attributes b) {
   unsigned int tipo = desconocido;
   int error = 0;
-  if (existeVar(a) && b.tipo != desconocido) {
-    tipo = asignaTipo(a);
+  if (VariableExists(a) && b.tipo != desconocido) {
+    tipo = AssignType(a);
     if (tipo != b.tipo) {
       if ((tipo == real || tipo == entero) &&
           (b.tipo == real || b.tipo == entero)) {
@@ -189,47 +198,48 @@ unsigned int comprobarTipoASSIGN(atributos a, atributos op, atributos b) {
       } else
         error = 1;
     } else if (tipo == lista) {
-      unsigned int tipoLista = asignaTipoLista(a);
-      if (tipoLista != b.tipoLista) error = 1;
+      unsigned int type_array = AssignArrayType(a);
+      if (type_array != b.type_array) error = 1;
     }
   }
 
   if (error && b.tipo != desconocido)
-    fprintf(stderr, "[Linea %d]: tipos incompatibles al asignar.\n",
-            linea_actual);
+    fprintf(stderr, "Line %d. Semantic error: Can't assign(incompatible types).\n",
+            current_line);
   return tipo;
 }
-unsigned int real_entero2(dtipo t1, dtipo t2) {
+
+unsigned int RealOrInts(type t1, type t2) {
   if ((t1 == real || t1 == entero) && (t2 == real || t2 == entero)) return 1;
   return 0;
 }
-unsigned int real_entero(dtipo t) {
+
+unsigned int RealOrInt(type t) {
   if (t == real || t == entero) return 1;
   return 0;
 }
-unsigned int comprobarTipoBIN(atributos a, atributos op, atributos b) {
-  // printf("[Linea %d] %s %d | %s %d\n", linea_actual, a.lexema, asignaTipo(a),
-  // b.lexema, b.tipo);
+
+unsigned int CheckBynaryTypes(attributes a, attributes op, attributes b) {
   unsigned int tipo = op.tipo;
   int error = 1;
-  switch (op.atrib) {
+  switch (op.attribute) {
     case 0:  // -
     case 3:  // /
-      if (a.tipo == lista && real_entero(b.tipo))
+      if (a.tipo == lista && RealOrInt(b.tipo))
         error = 0;
       else
-        error = !real_entero2(a.tipo, b.tipo);
+        error = !RealOrInts(a.tipo, b.tipo);
       break;
     case 1:  // +
     case 2:  // *
-      if (a.tipo == lista && real_entero(b.tipo)) {
+      if (a.tipo == lista && RealOrInt(b.tipo)) {
         error = 0;
         tipo = lista;
-      } else if (real_entero(a.tipo) && b.tipo == lista) {
+      } else if (RealOrInt(a.tipo) && b.tipo == lista) {
         error = 0;
         tipo = entero;
       } else
-        error = !real_entero2(a.tipo, b.tipo);
+        error = !RealOrInts(a.tipo, b.tipo);
       break;
     case 4:   // &
     case 5:   // |
@@ -238,7 +248,7 @@ unsigned int comprobarTipoBIN(atributos a, atributos op, atributos b) {
     case 8:   // <
     case 9:   // >=
     case 10:  // <=
-      error = !real_entero2(a.tipo, b.tipo);
+      error = !RealOrInts(a.tipo, b.tipo);
       break;
 
     case 13:  // ||
@@ -253,7 +263,7 @@ unsigned int comprobarTipoBIN(atributos a, atributos op, atributos b) {
       break;
     case 19:  // ++
       if (a.tipo == lista &&
-          (a.tipoLista == b.tipo || real_entero2(a.tipoLista, b.tipo)))
+          (a.type_array == b.tipo || RealOrInts(a.type_array, b.tipo)))
         error = 0;
       break;
     case 17:  // **
@@ -263,100 +273,81 @@ unsigned int comprobarTipoBIN(atributos a, atributos op, atributos b) {
     case 12:  // !=
     default:
       if (a.tipo != b.tipo) {
-        error = !real_entero2(a.tipo, b.tipo);
+        error = !RealOrInts(a.tipo, b.tipo);
       } else
         error = 0;
   }
   if (error && a.tipo != desconocido && b.tipo != desconocido)
-    fprintf(stderr, "[Linea %d]: tipos incompatibles al operar.\n",
-            linea_actual);
+    fprintf(stderr, "Line %d. Semantic error: Can't operate(incompatible types).\n",
+            current_line);
   return tipo;
 }
-unsigned int comprobarTipoUNIT(atributos op, atributos a) {
-  // printf("[Linea %d] %s %d | %s %d\n", linea_actual, a.lexema, a.tipo,
-  // op.lexema, op.tipo);
+unsigned int CheckUnaryType(attributes op, attributes a) {
   unsigned int tipo = 0;
   int error = 1;
-  switch (op.atrib) {
-    case 0:  // ~a
-      if (a.tipo == real || a.tipo == entero) {
-        tipo = a.tipo;
-        error = 0;
-      }
-      break;
-    case 1:  // !a
+
+  switch (op.attribute) {
+    case 0:  // !a
       if (a.tipo == booleano) {
         tipo = booleano;
-        error = 0;
-      }
-      break;
-
-    case 2:  // #l
-      if (a.tipo == lista) {
-        tipo = entero;
-        error = 0;
-      }
-      break;
-    case 3:  // ?l
-      if (a.tipo == lista) {
-        tipo = a.tipoLista;
         error = 0;
       }
       break;
   }
 
   if (error && a.tipo != desconocido)
-    fprintf(stderr, "[Linea %d]: tipo incompatible en la operacion sobre.\n ",
-            linea_actual);
-  return tipo;
-}
-unsigned int existeFuncionID(char *id) {
-  int topeTMP = TOPE, existe = 0;
+    fprintf(stderr, "Line %d. Semantic error: Incompatible types.\n ",
+            current_line);
 
-  while (topeTMP >= 0 && existe == 0) {
-    if (TS[topeTMP].entrada == funcion && !strcmp(id, TS[topeTMP].nombre))
-      existe = 1;
-    else
-      topeTMP--;
-  }
-  if (existe) topeF = topeTMP;
-  return existe;
-}
-void existeFuncion(atributos a) {
-  if (!existeFuncionID(a.lexema))
-    fprintf(stderr, "[Linea %d]: %s: no existe o fuera de ambito.\n",
-            linea_actual, a.lexema);
-}
-unsigned int asignaTipoFuncion(char *id) {
-  unsigned int tipo = desconocido;
-  // printf("%s, %d\n", TS[topeF].nombre, TS[topeF].tipoDato);
-  if (existeFuncionID(id)) tipo = TS[topeF].tipoDato;
   return tipo;
 }
-void verificaNumPar(unsigned int num) {
-  int topeTMP = topeF;
-  if (existeFuncionID(idFuncion)) {
-    if (TS[topeTMP].parametros != num) {
-      fprintf(stderr, "[Linea %d]: %s: numero de  parametros incorrecto.\n",
-              linea_actual, TS[topeTMP].nombre);
+
+unsigned int ExistsFunctionID(char *id) {
+  int tmp_top = top, exists = 0;
+
+  while (tmp_top >= 0 && exists == 0) {
+    if (ST[tmp_top].input == function && !strcmp(id, ST[tmp_top].name))
+      exists = 1;
+    else
+      tmp_top--;
+  }
+  if (exists) function_top = tmp_top;
+  return exists;
+}
+
+void ExistsFunction(attributes a) {
+  if (!ExistsFunctionID(a.lexeme))
+    fprintf(stderr, "Line %d. Semantic error: Function '%s' does not exists, or out of scope.\n",
+            current_line, a.lexeme);
+}
+
+unsigned int AssignFunctionType(char *id) {
+  unsigned int tipo = desconocido;
+  if (ExistsFunctionID(id)) tipo = ST[function_top].data_type;
+  return tipo;
+}
+void CheckParenthesis(unsigned int num) {
+  int tmp_top = function_top;
+  if (ExistsFunctionID(function_id)) {
+    if (ST[tmp_top].parameters != num) {
+      fprintf(stderr, "Line %d. Semantic error: Function '%s' has wrong number of parameters.\n",
+              current_line, ST[tmp_top].name);
     }
   }
 }
-void verificaParam(atributos a, unsigned int pos) {
-  int topeTMP = topeF;
-  if (existeFuncionID(idFuncion)) {
-    if (pos <= TS[topeTMP].parametros) {
-      if (TS[topeTMP + pos].tipoDato == real && a.tipo == entero) {
+void CheckParameters(attributes a, unsigned int pos) {
+  int tmp_top = function_top;
+  if (ExistsFunctionID(function_id)) {
+    if (pos <= ST[tmp_top].parameters) {
+      if (ST[tmp_top + pos].data_type == real && a.tipo == entero) {
         a.tipo = real;
       }
-      // printf("param: %d: ,tipo = %d. lexema:%s, tipo= %d
-      // \n",pos,TP[topeTMP+pos].tipoDato,a.lexema,a.tipo);
-      if (TS[topeTMP].parametros == 0) {
-        fprintf(stderr, "[Linea %d]: %s: no tiene parametros.\n", linea_actual,
-                TS[topeTMP].nombre);
-      } else if (TS[topeTMP + pos].tipoDato != a.tipo) {
-        fprintf(stderr, "[Linea %d]: tipo del parametro %d incompatible.\n",
-                linea_actual, pos);
+      if (ST[tmp_top].parameters == 0) {
+        fprintf(stderr, "Line %d. Semantic error: '%s' does not have parameters.\n", current_line,
+                ST[tmp_top].name);
+      } else if (ST[tmp_top + pos].data_type != a.tipo) {
+        fprintf(stderr, "Line %d. Semantic error: incompatible type of parameter %d..\n",
+                current_line, pos);
       }
     }
   }
@@ -407,38 +398,38 @@ program : program_header block;
 
 program_header : MAIN LEFT_PAR RIGHT_PAR;
 
-block : LEFT_BRACE { TS_InsertaMARCA(); } local_var_declaration sub_programs_declaration sentences { TS_VaciarENTRADAS(); }RIGHT_BRACE
+block : LEFT_BRACE { InsertMark(); } local_var_declaration sub_programs_declaration sentences { EmptySymbolTable(); }RIGHT_BRACE
 
 sub_programs_declaration : sub_programs_declaration sub_program
                          | ;
 
-sub_program : subprogram_header {subProg = 1;} block {subProg = 0;};
+sub_program : subprogram_header {sub_program = 1;} block {sub_program = 0;};
 
-subprogram_header : TYPE ID LEFT_PAR {TS_InsertaSUBPROG($1, $2);} parameters RIGHT_PAR
-                  | TYPE ID LEFT_PAR RIGHT_PAR {TS_InsertaSUBPROG($1, $2);};
+subprogram_header : TYPE ID LEFT_PAR {AddSubProgram($1, $2);} parameters RIGHT_PAR
+                  | TYPE ID LEFT_PAR RIGHT_PAR {AddSubProgram($1, $2);};
 
-parameters : parameters COMMA TYPE ID {TS_InsertaPARAMF($4);}
-           | TYPE ID {TS_InsertaPARAMF($2);}
+parameters : parameters COMMA TYPE ID {AddFormalParameter($4);}
+           | TYPE ID {AddFormalParameter($2);}
            | error;
 
-local_var_declaration : LVDS { decVar = 1; } local_var_declarations { decVar = 0; } LVDE
+local_var_declaration : LVDS {variable_declarations = 1;} local_var_declarations {variable_declarations = 0;} LVDE
 				              | ;
 
 local_var_declarations : local_var_declarations var_declaration
                        | var_declaration;
 
-var_declaration : TYPE {tipoTMP = $1.tipo; tipoListaTMP = $1.tipoLista;} var_list SEMICOLON
+var_declaration : TYPE {tmp_type = $1.tipo; tmp_array_type = $1.type_array;} var_list SEMICOLON
                 | error;
 
-var_list : var_list COMMA id_or_array_id {if(decVar)TS_InsertaIDENT($3);}
-         | id_or_array_id {if(decVar)TS_InsertaIDENT($1);}
+var_list : var_list COMMA id_or_array_id {if(variable_declarations)AddID($3);}
+         | id_or_array_id {if(variable_declarations)AddID($1);}
          | error;
 
 id_or_array_id : ID
                | array_id;
 
-array_id : ID LEFT_BRACKET CONSTANT RIGHT_BRACKET {$$.tipo=asignaTipoLista($1); strcpy($$.lexema,$1.lexema);}
-         | ID LEFT_BRACKET CONSTANT COMMA CONSTANT RIGHT_BRACKET 	{$$.tipo=asignaTipoLista($1); strcpy($$.lexema,$1.lexema);};
+array_id : ID LEFT_BRACKET CONSTANT RIGHT_BRACKET {$$.tipo=AssignArrayType($1); strcpy($$.lexeme,$1.lexeme);}
+         | ID LEFT_BRACKET CONSTANT COMMA CONSTANT RIGHT_BRACKET 	{$$.tipo=AssignArrayType($1); strcpy($$.lexeme,$1.lexeme);};
 
 sentences : sentences sentence
           | sentence;
@@ -453,19 +444,19 @@ sentence : block
          | return
          | error;
 
-assign : ID ASSIGN expression SEMICOLON {$1.tipo = asignaTipo($1);
-																			   $1.tipoLista = asignaTipoLista($1);
-																			   strcpy($1.lexema,$1.lexema);
-																				 $$.tipo = comprobarTipoASSIGN($1,$2,$3);};
+assign : ID ASSIGN expression SEMICOLON {$1.tipo = AssignType($1);
+																			   $1.type_array = AssignArrayType($1);
+																			   strcpy($1.lexeme,$1.lexeme);
+																				 $$.tipo = CheckAssignType($1,$2,$3);};
 
-if : IF LEFT_PAR expression RIGHT_PAR sentence {comprobarExprLogica($3);}
-   | IF LEFT_PAR expression RIGHT_PAR sentence else {comprobarExprLogica($3);};
+if : IF LEFT_PAR expression RIGHT_PAR sentence {CheckLogicExpression($3);}
+   | IF LEFT_PAR expression RIGHT_PAR sentence else {CheckLogicExpression($3);};
 
 else : ELSE sentence;
 
-while : WHILE LEFT_PAR expression RIGHT_PAR LEFT_BRACE sentences RIGHT_BRACE {comprobarExprLogica($3);};
+while : WHILE LEFT_PAR expression RIGHT_PAR LEFT_BRACE sentences RIGHT_BRACE {CheckLogicExpression($3);};
 
-do_until : DO expression UNTIL LEFT_PAR expression RIGHT_PAR SEMICOLON {comprobarExprLogica($5);};
+do_until : DO expression UNTIL LEFT_PAR expression RIGHT_PAR SEMICOLON {CheckLogicExpression($5);};
 
 input : INPUT var_list SEMICOLON;
 
@@ -473,16 +464,16 @@ output : OUPUT expression SEMICOLON;
 
 return : RETURN expression SEMICOLON;
 
-expression_list : expression_list COMMA expression {if(func){	posParam++; verificaParam($3, posParam);}}
-                | expression {if(func){ posParam++; verificaParam($1,posParam);}};
+expression_list : expression_list COMMA expression {if(func){	param_position++; CheckParameters($3, param_position);}}
+                | expression {if(func){ param_position++; CheckParameters($1,param_position);}};
 
 expression : LEFT_PAR expression RIGHT_PAR {$$ = $2;}
-           | UNARY_OPERATOR expression { $$.tipo = comprobarTipoUNIT($1, $2);}
-           | expression BINARY_OPERATOR expression {$$.tipo = comprobarTipoBIN($1, $2, $3);}
-           | expression PLUS_OR_MINUS_OPERATOR expression {$$.tipo = comprobarTipoBIN($1, $2, $3);}
-           | PLUS_OR_MINUS_OPERATOR expression { $$.tipo = comprobarTipoUNIT($1, $2);}
-           | id_or_array_id {$$.tipo = asignaTipo($1); $$.tipoLista = asignaTipoLista($1); strcpy($$.lexema,$1.lexema);}
-           | CONSTANT {$$.tipo = $1.tipo; if($$.tipo == lista)$$.tipoLista = $1.tipoLista; }
+           | UNARY_OPERATOR expression { $$.tipo = CheckUnaryType($1, $2);}
+           | expression BINARY_OPERATOR expression {$$.tipo = CheckBynaryTypes($1, $2, $3);}
+           | expression PLUS_OR_MINUS_OPERATOR expression {$$.tipo = CheckBynaryTypes($1, $2, $3);}
+           | PLUS_OR_MINUS_OPERATOR expression { $$.tipo = CheckUnaryType($1, $2);}
+           | id_or_array_id {$$.tipo = AssignType($1); $$.type_array = AssignArrayType($1); strcpy($$.lexeme,$1.lexeme);}
+           | CONSTANT {$$.tipo = $1.tipo; if($$.tipo == lista)$$.type_array = $1.type_array; }
            | STRING
            | aggregate
            | function_call
@@ -494,13 +485,17 @@ constants_list: constants_list COMMA CONSTANT
 
 aggregate : LEFT_BRACKET constants_list RIGHT_BRACKET;
 
-function_call : ID LEFT_PAR {strcpy(idFuncion,$1.lexema); func=1; existeFuncion($1);} expression_list RIGHT_PAR {func=0; verificaNumPar(posParam); posParam=0;$$.tipo = asignaTipoFuncion(idFuncion);}
-							| ID LEFT_PAR {strcpy(idFuncion,$1.lexema); func=1; existeFuncion($1);} RIGHT_PAR;
+function_call : ID LEFT_PAR {strcpy(function_id, $1.lexeme);
+                             func=1; ExistsFunction($1);}
+                             expression_list RIGHT_PAR {func=0;
+                                                       CheckParenthesis(param_position);
+                                                       param_position=0;$$.tipo = AssignFunctionType(function_id);}
+							| ID LEFT_PAR {strcpy(function_id, $1.lexeme); func=1; ExistsFunction($1);} RIGHT_PAR;
 
 %%
 
 #include "lex.yy.c"
 
 void yyerror(const char* s) {
-  fprintf(stderr, "Line %d. Parse error: %s\n", linea_actual, s);
+  fprintf(stderr, "Line %d. Parse error: %s\n", current_line, s);
 }
