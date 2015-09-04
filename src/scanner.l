@@ -12,13 +12,13 @@ char            [^\"\""]
 %%;
 "main"          {return MAIN;}
 
-int             {yylval.type = t_int; return TYPE;}
-float           {yylval.type = t_float; return TYPE;}
-char            {yylval.type = t_char; return TYPE;}
-boolean         {yylval.type = boolean; return TYPE;}
+int             {yylval.tipo = entero; return TYPE;}
+float           {yylval.tipo = real; return TYPE;}
+char            {yylval.tipo = caracter; return TYPE;}
+boolean         {yylval.tipo = booleano; return TYPE;}
 
-false           {yylval.lexeme = strdup (yytext); yylval.attribute = 0; yylval.type = boolean; return CONSTANT;}
-true            {yylval.lexeme = strdup (yytext); yylval.attribute = 1; yylval.type = boolean; return CONSTANT;}
+false           {yylval.lexema = strdup (yytext); yylval.atrib = 0; yylval.tipo = booleano; return CONSTANT;}
+true            {yylval.lexema = strdup (yytext); yylval.atrib = 1; yylval.tipo = booleano; return CONSTANT;}
 
 "("             {return LEFT_PAR;}
 ")"             {return RIGHT_PAR;}
@@ -33,45 +33,45 @@ true            {yylval.lexeme = strdup (yytext); yylval.attribute = 1; yylval.t
 ","             {return COMMA;}
 ";"             {return SEMICOLON;}
 "."             {return DOT;}
-"="             {yylval.attribute = ASSIGN; return ASSIGN;}
+"="             {yylval.atrib = ASSIGN; return ASSIGN;}
 
-"!"             {yylval.attribute = 0; yylval.type = boolean; return UNARY_OPERATOR;}
+"!"             {yylval.atrib = 0; yylval.tipo = booleano; return UNARY_OPERATOR;}
 
-"-"             {yylval.attribute = 0; yylval.type = t_int; return PLUS_OR_MINUS_OPERATOR;}
-"+"             {yylval.attribute = 1; yylval.type = t_int; return PLUS_OR_MINUS_OPERATOR;}
+"-"             {yylval.atrib = 0; yylval.tipo = entero; return PLUS_OR_MINUS_OPERATOR;}
+"+"             {yylval.atrib = 1; yylval.tipo = entero; return PLUS_OR_MINUS_OPERATOR;}
 
-"*"             {yylval.attribute = 0; yylval.type = t_int; return BINARY_OPERATOR;}
-"/"             {yylval.attribute = 1; yylval.type = t_int; return BINARY_OPERATOR;}
-">"             {yylval.attribute = 2; yylval.type = boolean; return BINARY_OPERATOR;}
-"<"             {yylval.attribute = 3; yylval.type = boolean; return BINARY_OPERATOR;}
-">="            {yylval.attribute = 4; yylval.type = boolean; return BINARY_OPERATOR;}
-"<="            {yylval.attribute = 5; yylval.type = boolean; return BINARY_OPERATOR;}
-"=="            {yylval.attribute = 6; yylval.type = boolean; return BINARY_OPERATOR;}
-"!="            {yylval.attribute = 7; yylval.type = boolean; return BINARY_OPERATOR;}
-"||"            {yylval.attribute = 8; yylval.type = boolean; return BINARY_OPERATOR;}
-"&&"            {yylval.attribute = 9; yylval.type = boolean; return BINARY_OPERATOR;}
-"**"            {yylval.attribute = 10; yylval.type = array; return BINARY_OPERATOR;}
+"*"             {yylval.atrib = 0; yylval.tipo = entero; return BINARY_OPERATOR;}
+"/"             {yylval.atrib = 1; yylval.tipo = entero; return BINARY_OPERATOR;}
+">"             {yylval.atrib = 2; yylval.tipo = booleano; return BINARY_OPERATOR;}
+"<"             {yylval.atrib = 3; yylval.tipo = booleano; return BINARY_OPERATOR;}
+">="            {yylval.atrib = 4; yylval.tipo = booleano; return BINARY_OPERATOR;}
+"<="            {yylval.atrib = 5; yylval.tipo = booleano; return BINARY_OPERATOR;}
+"=="            {yylval.atrib = 6; yylval.tipo = booleano; return BINARY_OPERATOR;}
+"!="            {yylval.atrib = 7; yylval.tipo = booleano; return BINARY_OPERATOR;}
+"||"            {yylval.atrib = 8; yylval.tipo = booleano; return BINARY_OPERATOR;}
+"&&"            {yylval.atrib = 9; yylval.tipo = booleano; return BINARY_OPERATOR;}
+"**"            {yylval.atrib = 10; yylval.tipo = lista; return BINARY_OPERATOR;}
 
-"if"            {control_line = current_line; return IF;}
+"if"            {linea_control = linea_actual; return IF;}
 "else"          {return ELSE;}
-"while"         {control_line = current_line; return WHILE;}
+"while"         {linea_control = linea_actual; return WHILE;}
 "do"            {return DO;}
-"until"         {control_line = current_line; return UNTIL;}
+"until"         {linea_control = linea_actual; return UNTIL;}
 "input"         {return INPUT;}
 "output"        {return OUPUT;}
 "return"        {return RETURN;}
 
-{digit}+              {yylval.lexeme = strdup(yytext); yylval.attribute = CONSTANT; yylval.type = t_int; return CONSTANT;}
-{digit}+\.{digit}+    {yylval.lexeme = strdup(yytext); yylval.attribute = CONSTANT; yylval.type = t_float; return CONSTANT;}
-"\'"{char}"\'"        {yylval.lexeme = strdup(yytext); yylval.attribute = CONSTANT; yylval.type = t_char; return CONSTANT;}
-"\""{char}+"\""       {yylval.lexeme = strdup(yytext); yylval.attribute = CONSTANT; return STRING;}
-{letter}[a-zA-Z0-9_]* {yylval.lexeme = strdup(yytext); yylval.attribute = ID; return ID;}
+{digit}+              {yylval.lexema = strdup(yytext); yylval.atrib = CONSTANT; yylval.tipo = entero; return CONSTANT;}
+{digit}+\.{digit}+    {yylval.lexema = strdup(yytext); yylval.atrib = CONSTANT; yylval.tipo = real; return CONSTANT;}
+"\'"{char}"\'"        {yylval.lexema = strdup(yytext); yylval.atrib = CONSTANT; yylval.tipo = caracter; return CONSTANT;}
+"\""{char}+"\""       {yylval.lexema = strdup(yytext); yylval.atrib = CONSTANT; return STRING;}
+{letter}[a-zA-Z0-9_]* {yylval.lexema = strdup(yytext); yylval.atrib = ID; return ID;}
 {whitespace}+         {}
-\n                    {current_line++;}
+\n                    {linea_actual++;}
 
 . {
   fprintf(stderr,"Line %d. Lexic error: %s\n",
-          current_line, yytext);
+          linea_actual, yytext);
 }
 
 %%

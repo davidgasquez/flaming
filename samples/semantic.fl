@@ -1,0 +1,19 @@
+main(){
+  LVDS
+    int a,b,c,d,vector[2],matrix[2,2];
+  	float e,f,g,h;
+  	char z, array[4];
+  	boolean x;
+  LVDE
+  int functionA(int a1, float a2, char a3) {
+		LVDS
+			int x1, x2;
+		LVDE
+     a2 = a1 + a2/10;
+  }
+
+  a = functionA(a, 2, z);
+  if(true){
+    a = 2 + 2;
+  }
+}
