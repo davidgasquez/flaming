@@ -477,10 +477,10 @@ expression_list : expression_list COMMA expression {if(func){	posParam++; verifi
                 | expression {if(func){ posParam++; verificaParam($1,posParam);}};
 
 expression : LEFT_PAR expression RIGHT_PAR {$$ = $2;}
-           | UNARY_OPERATOR expression
-           | expression BINARY_OPERATOR expression
-           | expression PLUS_OR_MINUS_OPERATOR expression
-           | PLUS_OR_MINUS_OPERATOR expression
+           | UNARY_OPERATOR expression { $$.tipo = comprobarTipoUNIT($1, $2);}
+           | expression BINARY_OPERATOR expression {$$.tipo = comprobarTipoBIN($1, $2, $3);}
+           | expression PLUS_OR_MINUS_OPERATOR expression {$$.tipo = comprobarTipoBIN($1, $2, $3);}
+           | PLUS_OR_MINUS_OPERATOR expression { $$.tipo = comprobarTipoUNIT($1, $2);}
            | id_or_array_id {$$.tipo = asignaTipo($1); $$.tipoLista = asignaTipoLista($1); strcpy($$.lexema,$1.lexema);}
            | CONSTANT {$$.tipo = $1.tipo; if($$.tipo == lista)$$.tipoLista = $1.tipoLista; }
            | STRING

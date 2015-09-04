@@ -13,7 +13,7 @@ main(){
   }
 
   a = functionA(a, 2, z);
-  if(true){
+  if((2+2) > 5){
     a = 2 + 2;
   }
 }
