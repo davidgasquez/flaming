@@ -1,6 +1,6 @@
 main(){
   LVDS
-    int a,b,c,d,vector[2],matrix[2,2];
+    int a,b,c,d,vector[2], matrix[2,2];
   	float e,f,g,h;
   	char z, array[4];
   	boolean x;
@@ -14,7 +14,10 @@ main(){
   x = (2/10 * 40) >= 5;
   a = functionA(a, 2, z);
   if((2+2) > 5){
-    matrix = [2, 52; 7, 8];
+    matrix = [2, 52; 7, 8] * [2, 3];
     vector[0] = 3.1415;
+    a = 2+2;
+    z = 'b';
+    a = 2 * [1,2,3] / 10;
   }
 }

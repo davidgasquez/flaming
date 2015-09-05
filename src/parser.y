@@ -192,8 +192,8 @@ unsigned int CheckAssignType(attributes a, attributes op, attributes b) {
   if (VariableExists(a) && b.type != unknown) {
     type = AssignType(a);
     if (type != b.type) {
-      if ((type == real || type == integer) &&
-          (b.type == real || b.type == integer)) {
+      if ((type == real || type == integer || type == array) &&
+          (b.type == real || b.type == integer || b.type == array)) {
         error = 0;
       } else
         error = 1;
@@ -202,7 +202,6 @@ unsigned int CheckAssignType(attributes a, attributes op, attributes b) {
       if (type_array != b.type_array) error = 1;
     }
   }
-
   if (error && b.type != unknown)
     fprintf(stderr, "Line %d. Semantic error: Can't assign(incompatible types).\n",
             current_line);
@@ -394,8 +393,12 @@ var_list : var_list COMMA id_or_array_id {if(variable_declarations)AddID($3);}
 id_or_array_id : ID
                | array_id;
 
-array_id : ID LEFT_BRACKET CONSTANT RIGHT_BRACKET {$$.type=AssignArrayType($1); strcpy($$.lexeme,$1.lexeme);}
-         | ID LEFT_BRACKET CONSTANT COMMA CONSTANT RIGHT_BRACKET 	{$$.type=AssignArrayType($1); strcpy($$.lexeme,$1.lexeme);};
+array_id : ID LEFT_BRACKET CONSTANT RIGHT_BRACKET {tmp_type = array;}
+         | ID LEFT_BRACKET CONSTANT COMMA CONSTANT RIGHT_BRACKET 	{tmp_type = array;};
+
+id_or_array_position : ID {$$.type=AssignType($1); strcpy($$.lexeme,$1.lexeme);}
+					           | ID LEFT_BRACKET expression RIGHT_BRACKET {	$$.type=AssignArrayType($1); strcpy($$.lexeme,$1.lexeme);}
+					           | ID LEFT_BRACKET expression COMMA expression RIGHT_BRACKET {	$$.type=AssignArrayType($1);strcpy($$.lexeme,$1.lexeme);};
 
 sentences : sentences sentence
           | sentence;
@@ -410,7 +413,7 @@ sentence : block
          | return
          | error;
 
-assign : id_or_array_id ASSIGN expression SEMICOLON {$1.type = AssignType($1);
+assign : id_or_array_position ASSIGN expression SEMICOLON {$1.type = AssignType($1);
 																			   $1.type_array = AssignArrayType($1);
 																			   strcpy($1.lexeme,$1.lexeme);
 																				 $$.type = CheckAssignType($1,$2,$3);};
@@ -438,7 +441,7 @@ expression : LEFT_PAR expression RIGHT_PAR {$$ = $2;}
            | expression BINARY_OPERATOR expression {$$.type = CheckBynaryTypes($1, $2, $3);}
            | expression PLUS_OR_MINUS_OPERATOR expression {$$.type = CheckBynaryTypes($1, $2, $3);}
            | PLUS_OR_MINUS_OPERATOR expression { $$.type = CheckUnaryType($1, $2);}
-           | id_or_array_id {$$.type = AssignType($1); $$.type_array = AssignArrayType($1); strcpy($$.lexeme,$1.lexeme);}
+           | id_or_array_position {$$.type = AssignType($1); $$.type_array = AssignArrayType($1); strcpy($$.lexeme,$1.lexeme);}
            | CONSTANT {$$.type = $1.type; if($$.type == array)$$.type_array = $1.type_array; }
            | STRING
            | aggregate
