@@ -16,13 +16,13 @@ typedef enum {
   formal_parameter
 } input_type;
 typedef enum {
-  entero,
+  integer,
   real,
-  caracter,
-  booleano,
-  lista,
-  desconocido,
-  no_asignado
+  character,
+  boolean,
+  array,
+  unknown,
+  not_assigned
 } type;
 typedef struct {
   input_type input;
@@ -45,11 +45,11 @@ type tmp_type, tmp_array_type;
 typedef struct {
   int attribute;       /* Atributo del símbolo (si tiene) */
   char *lexeme;    /* Nombre del lexeme */
-  type tipo;      /* Tipo del símbolo */
-  type type_array; /* Si tipo es lista, tipo de la lista */
+  type type;      /* Tipo del símbolo */
+  type type_array; /* Si type es array, type de la array */
 } attributes;
 #define YYSTYPE attributes /* A partir de ahora, cada símbolo tiene */
-                          /* una estructura de tipo attributes */
+                          /* una estructura de type attributes */
 
 
 void InsertMark() {
@@ -64,7 +64,7 @@ void InsertMark() {
         ST[top].input = variable;
         ST[top].name = ST[tmp_top].name;
         ST[top].data_type = ST[tmp_top].data_type;
-        if (ST[top].data_type == lista)
+        if (ST[top].data_type == array)
           ST[top].data_type_array = ST[tmp_top].data_type_array;
       }
       tmp_top--;
@@ -114,7 +114,7 @@ void AddID(attributes a) {
     ST[top].input = variable;
     ST[top].name = a.lexeme;
     ST[top].data_type = tmp_type;
-    if (tmp_type == lista) ST[top].data_type_array = tmp_array_type;
+    if (tmp_type == array) ST[top].data_type_array = tmp_array_type;
   }
 }
 
@@ -123,7 +123,7 @@ void AddSubProgram(attributes t, attributes a) {
   ST[top].input = function;
   ST[top].name = a.lexeme;
   ST[top].parameters = 0;
-  ST[top].data_type = t.tipo;
+  ST[top].data_type = t.type;
 }
 
 void AddFormalParameter(attributes a) {
@@ -131,9 +131,9 @@ void AddFormalParameter(attributes a) {
 
   ST[top].input = formal_parameter;
   ST[top].name = a.lexeme;
-  ST[top].data_type = a.tipo;
+  ST[top].data_type = a.type;
 
-  if (a.tipo == lista) {
+  if (a.type == array) {
     ST[top].data_type_array = a.type_array;
   }
 
@@ -147,7 +147,7 @@ void AddFormalParameter(attributes a) {
 }
 
 void CheckLogicExpression(attributes a) {
-  if (a.tipo != booleano)
+  if (a.type != boolean)
     fprintf(stderr, "Line %d. Semantic error: Not a logical expression.\n",
             control_line);
 }
@@ -155,151 +155,117 @@ void CheckLogicExpression(attributes a) {
 unsigned int AssignType(attributes a) {
   int tmp_top = top;
   int existe = 0;
-  unsigned int tipo = desconocido;
+  unsigned int type = unknown;
   if (VariableExists(a)) {
     while (existe == 0 && tmp_top >= 0) {
       if (!strcmp(ST[tmp_top].name, a.lexeme)) {
         existe = 1;
-        tipo = ST[tmp_top].data_type;
+        type = ST[tmp_top].data_type;
       }
       tmp_top--;
     }
   } else
     fprintf(stderr, "Line %d. Semantic error: Variable '%s' not defined.\n", current_line, a.lexeme);
-  return tipo;
+  return type;
 }
 
 unsigned int AssignArrayType(attributes a) {
   int tmp_top = top;
   int exists = 0;
-  unsigned int tipo = desconocido;
+  unsigned int type = unknown;
 
   if (VariableExists(a)) {
     while (exists == 0 && tmp_top >= 0) {
       if (!strcmp(ST[tmp_top].name, a.lexeme)) {
         exists = 1;
-        tipo = ST[tmp_top].data_type_array;
+        type = ST[tmp_top].data_type_array;
       }
       tmp_top--;
     }
   }
-  return tipo;
+  return type;
 }
 
 unsigned int CheckAssignType(attributes a, attributes op, attributes b) {
-  unsigned int tipo = desconocido;
+  unsigned int type = unknown;
   int error = 0;
-  if (VariableExists(a) && b.tipo != desconocido) {
-    tipo = AssignType(a);
-    if (tipo != b.tipo) {
-      if ((tipo == real || tipo == entero) &&
-          (b.tipo == real || b.tipo == entero)) {
+  if (VariableExists(a) && b.type != unknown) {
+    type = AssignType(a);
+    if (type != b.type) {
+      if ((type == real || type == integer) &&
+          (b.type == real || b.type == integer)) {
         error = 0;
       } else
         error = 1;
-    } else if (tipo == lista) {
+    } else if (type == array) {
       unsigned int type_array = AssignArrayType(a);
       if (type_array != b.type_array) error = 1;
     }
   }
 
-  if (error && b.tipo != desconocido)
+  if (error && b.type != unknown)
     fprintf(stderr, "Line %d. Semantic error: Can't assign(incompatible types).\n",
             current_line);
-  return tipo;
+  return type;
 }
 
 unsigned int RealOrInts(type t1, type t2) {
-  if ((t1 == real || t1 == entero) && (t2 == real || t2 == entero)) return 1;
-  return 0;
-}
-
-unsigned int RealOrInt(type t) {
-  if (t == real || t == entero) return 1;
+  if ((t1 == real || t1 == integer) && (t2 == real || t2 == integer)) return 1;
   return 0;
 }
 
 unsigned int CheckBynaryTypes(attributes a, attributes op, attributes b) {
-  unsigned int tipo = op.tipo;
+  unsigned int type = op.type;
   int error = 1;
   switch (op.attribute) {
-    case 0:  // -
-    case 3:  // /
-      if (a.tipo == lista && RealOrInt(b.tipo))
-        error = 0;
-      else
-        error = !RealOrInts(a.tipo, b.tipo);
+    case 11:  // -
+    case 1:   // /
+    case 12:  // +
+    case 0:   // *
+    case 2:   // >
+    case 3:   // <
+    case 4:   // >=
+    case 5:   // <=
+      error = !RealOrInts(a.type, b.type);
       break;
-    case 1:  // +
-    case 2:  // *
-      if (a.tipo == lista && RealOrInt(b.tipo)) {
-        error = 0;
-        tipo = lista;
-      } else if (RealOrInt(a.tipo) && b.tipo == lista) {
-        error = 0;
-        tipo = entero;
-      } else
-        error = !RealOrInts(a.tipo, b.tipo);
+    case 8:   // ||
+    case 9:   // &&
+      if (a.type == boolean && b.type == boolean) error = 0;
       break;
-    case 4:   // &
-    case 5:   // |
-    case 6:   // ^
-    case 7:   // >
-    case 8:   // <
-    case 9:   // >=
-    case 10:  // <=
-      error = !RealOrInts(a.tipo, b.tipo);
+    case 10:  // **
+      if (a.type == array && b.type == array) error = 0;
       break;
-
-    case 13:  // ||
-    case 14:  // &&
-      if (a.tipo == booleano && b.tipo == booleano) error = 0;
-      break;
-    case 15:  // %
-    case 16:  // --
-    case 18:  // @
-
-      if (a.tipo == lista && b.tipo == entero) error = 0;
-      break;
-    case 19:  // ++
-      if (a.tipo == lista &&
-          (a.type_array == b.tipo || RealOrInts(a.type_array, b.tipo)))
-        error = 0;
-      break;
-    case 17:  // **
-      if (a.tipo == lista && b.tipo == lista) error = 0;
-      break;
-    case 11:  // ==
-    case 12:  // !=
+    case 6:   // ==
+    case 7:   // !=
     default:
-      if (a.tipo != b.tipo) {
-        error = !RealOrInts(a.tipo, b.tipo);
+      if (a.type != b.type) {
+        error = !RealOrInts(a.type, b.type);
       } else
         error = 0;
   }
-  if (error && a.tipo != desconocido && b.tipo != desconocido)
+  if (error && a.type != unknown && b.type != unknown)
     fprintf(stderr, "Line %d. Semantic error: Can't operate(incompatible types).\n",
             current_line);
-  return tipo;
+  return type;
 }
 unsigned int CheckUnaryType(attributes op, attributes a) {
-  unsigned int tipo = 0;
+  unsigned int type = 0;
   int error = 1;
 
   switch (op.attribute) {
     case 0:  // !a
-      if (a.tipo == booleano) {
-        tipo = booleano;
+      if (a.type == boolean) {
+        type = boolean;
         error = 0;
       }
       break;
   }
 
-  if (error && a.tipo != desconocido)
+  if (error && a.type != unknown)
     fprintf(stderr, "Line %d. Semantic error: Incompatible types.\n ",
             current_line);
 
-  return tipo;
+  return type;
 }
 
 unsigned int ExistsFunctionID(char *id) {
@@ -322,9 +288,9 @@ void ExistsFunction(attributes a) {
 }
 
 unsigned int AssignFunctionType(char *id) {
-  unsigned int tipo = desconocido;
-  if (ExistsFunctionID(id)) tipo = ST[function_top].data_type;
-  return tipo;
+  unsigned int type = unknown;
+  if (ExistsFunctionID(id)) type = ST[function_top].data_type;
+  return type;
 }
 void CheckParenthesis(unsigned int num) {
   int tmp_top = function_top;
@@ -339,13 +305,13 @@ void CheckParameters(attributes a, unsigned int pos) {
   int tmp_top = function_top;
   if (ExistsFunctionID(function_id)) {
     if (pos <= ST[tmp_top].parameters) {
-      if (ST[tmp_top + pos].data_type == real && a.tipo == entero) {
-        a.tipo = real;
+      if (ST[tmp_top + pos].data_type == real && a.type == integer) {
+        a.type = real;
       }
       if (ST[tmp_top].parameters == 0) {
         fprintf(stderr, "Line %d. Semantic error: '%s' does not have parameters.\n", current_line,
                 ST[tmp_top].name);
-      } else if (ST[tmp_top + pos].data_type != a.tipo) {
+      } else if (ST[tmp_top + pos].data_type != a.type) {
         fprintf(stderr, "Line %d. Semantic error: incompatible type of parameter %d..\n",
                 current_line, pos);
       }
@@ -418,7 +384,7 @@ local_var_declaration : LVDS {variable_declarations = 1;} local_var_declarations
 local_var_declarations : local_var_declarations var_declaration
                        | var_declaration;
 
-var_declaration : TYPE {tmp_type = $1.tipo; tmp_array_type = $1.type_array;} var_list SEMICOLON
+var_declaration : TYPE {tmp_type = $1.type; tmp_array_type = $1.type_array;} var_list SEMICOLON
                 | error;
 
 var_list : var_list COMMA id_or_array_id {if(variable_declarations)AddID($3);}
@@ -428,8 +394,8 @@ var_list : var_list COMMA id_or_array_id {if(variable_declarations)AddID($3);}
 id_or_array_id : ID
                | array_id;
 
-array_id : ID LEFT_BRACKET CONSTANT RIGHT_BRACKET {$$.tipo=AssignArrayType($1); strcpy($$.lexeme,$1.lexeme);}
-         | ID LEFT_BRACKET CONSTANT COMMA CONSTANT RIGHT_BRACKET 	{$$.tipo=AssignArrayType($1); strcpy($$.lexeme,$1.lexeme);};
+array_id : ID LEFT_BRACKET CONSTANT RIGHT_BRACKET {$$.type=AssignArrayType($1); strcpy($$.lexeme,$1.lexeme);}
+         | ID LEFT_BRACKET CONSTANT COMMA CONSTANT RIGHT_BRACKET 	{$$.type=AssignArrayType($1); strcpy($$.lexeme,$1.lexeme);};
 
 sentences : sentences sentence
           | sentence;
@@ -444,10 +410,10 @@ sentence : block
          | return
          | error;
 
-assign : ID ASSIGN expression SEMICOLON {$1.tipo = AssignType($1);
+assign : id_or_array_id ASSIGN expression SEMICOLON {$1.type = AssignType($1);
 																			   $1.type_array = AssignArrayType($1);
 																			   strcpy($1.lexeme,$1.lexeme);
-																				 $$.tipo = CheckAssignType($1,$2,$3);};
+																				 $$.type = CheckAssignType($1,$2,$3);};
 
 if : IF LEFT_PAR expression RIGHT_PAR sentence {CheckLogicExpression($3);}
    | IF LEFT_PAR expression RIGHT_PAR sentence else {CheckLogicExpression($3);};
@@ -468,12 +434,12 @@ expression_list : expression_list COMMA expression {if(func){	param_position++; 
                 | expression {if(func){ param_position++; CheckParameters($1,param_position);}};
 
 expression : LEFT_PAR expression RIGHT_PAR {$$ = $2;}
-           | UNARY_OPERATOR expression { $$.tipo = CheckUnaryType($1, $2);}
-           | expression BINARY_OPERATOR expression {$$.tipo = CheckBynaryTypes($1, $2, $3);}
-           | expression PLUS_OR_MINUS_OPERATOR expression {$$.tipo = CheckBynaryTypes($1, $2, $3);}
-           | PLUS_OR_MINUS_OPERATOR expression { $$.tipo = CheckUnaryType($1, $2);}
-           | id_or_array_id {$$.tipo = AssignType($1); $$.type_array = AssignArrayType($1); strcpy($$.lexeme,$1.lexeme);}
-           | CONSTANT {$$.tipo = $1.tipo; if($$.tipo == lista)$$.type_array = $1.type_array; }
+           | UNARY_OPERATOR expression { $$.type = CheckUnaryType($1, $2);}
+           | expression BINARY_OPERATOR expression {$$.type = CheckBynaryTypes($1, $2, $3);}
+           | expression PLUS_OR_MINUS_OPERATOR expression {$$.type = CheckBynaryTypes($1, $2, $3);}
+           | PLUS_OR_MINUS_OPERATOR expression { $$.type = CheckUnaryType($1, $2);}
+           | id_or_array_id {$$.type = AssignType($1); $$.type_array = AssignArrayType($1); strcpy($$.lexeme,$1.lexeme);}
+           | CONSTANT {$$.type = $1.type; if($$.type == array)$$.type_array = $1.type_array; }
            | STRING
            | aggregate
            | function_call
@@ -489,7 +455,7 @@ function_call : ID LEFT_PAR {strcpy(function_id, $1.lexeme);
                              func=1; ExistsFunction($1);}
                              expression_list RIGHT_PAR {func=0;
                                                        CheckParenthesis(param_position);
-                                                       param_position=0;$$.tipo = AssignFunctionType(function_id);}
+                                                       param_position=0;$$.type = AssignFunctionType(function_id);}
 							| ID LEFT_PAR {strcpy(function_id, $1.lexeme); func=1; ExistsFunction($1);} RIGHT_PAR;
 
 %%
