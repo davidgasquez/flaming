@@ -1,9 +1,12 @@
+// Copyright (c) 2015 David Gasquez
+
 %{
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 void yyerror(const char* s);
+int yylex();
 
 int current_line = 1;
 int control_line;
@@ -15,6 +18,7 @@ typedef enum {
   variable,
   formal_parameter
 } input_type;
+
 typedef enum {
   integer,
   real,
@@ -24,6 +28,7 @@ typedef enum {
   unknown,
   not_assigned
 } type;
+
 typedef struct {
   input_type input;
   char *name;
@@ -33,24 +38,23 @@ typedef struct {
 } symbol_table;
 
 #define MAX_ST 500
-unsigned int top = -1, function_top; /* Tope de la pila */
+unsigned int top = -1, function_top;
 unsigned int sub_program = 0,
-             variable_declarations = 0; /* Indicador de comienzo de bloque de un subprog */
+             variable_declarations = 0;
 unsigned int func = 0, param_position = 0;
 char function_id[100];
-symbol_table ST[MAX_ST]; /* Pila de la tabla de símbolos */
+symbol_table ST[MAX_ST];
 
 type tmp_type, tmp_array_type;
 
 typedef struct {
-  int attribute;       /* Atributo del símbolo (si tiene) */
-  char *lexeme;    /* Nombre del lexeme */
-  type type;      /* Tipo del símbolo */
-  type type_array; /* Si type es array, type de la array */
+  int attribute;
+  char *lexeme;
+  type type;
+  type type_array;
 } attributes;
-#define YYSTYPE attributes /* A partir de ahora, cada símbolo tiene */
-                          /* una estructura de type attributes */
 
+#define YYSTYPE attributes
 
 void InsertMark() {
   top++;
@@ -108,7 +112,8 @@ int ExistsID(attributes a) {
 
 void AddID(attributes a) {
   if (ExistsID(a))
-    fprintf(stderr, "Line %d. Semantic error: '%s' already exists.\n", current_line, a.lexeme);
+    fprintf(stderr, "Line %d. Semantic error: '%s' already exists.\n",
+            current_line, a.lexeme);
   else {
     top++;
     ST[top].input = variable;
@@ -165,7 +170,8 @@ unsigned int AssignType(attributes a) {
       tmp_top--;
     }
   } else
-    fprintf(stderr, "Line %d. Semantic error: Variable '%s' not defined.\n", current_line, a.lexeme);
+    fprintf(stderr, "Line %d. Semantic error: Variable '%s' not defined.\n",
+            current_line, a.lexeme);
   return type;
 }
 
@@ -189,6 +195,7 @@ unsigned int AssignArrayType(attributes a) {
 unsigned int CheckAssignType(attributes a, attributes op, attributes b) {
   unsigned int type = unknown;
   int error = 0;
+
   if (VariableExists(a) && b.type != unknown) {
     type = AssignType(a);
     if (type != b.type) {
@@ -202,9 +209,12 @@ unsigned int CheckAssignType(attributes a, attributes op, attributes b) {
       if (type_array != b.type_array) error = 1;
     }
   }
+
   if (error && b.type != unknown)
-    fprintf(stderr, "Line %d. Semantic error: Can't assign(incompatible types).\n",
+    fprintf(stderr,
+            "Line %d. Semantic error: Can't assign(incompatible types).\n",
             current_line);
+
   return type;
 }
 
@@ -243,7 +253,8 @@ unsigned int CheckBynaryTypes(attributes a, attributes op, attributes b) {
         error = 0;
   }
   if (error && a.type != unknown && b.type != unknown)
-    fprintf(stderr, "Line %d. Semantic error: Can't operate(incompatible types).\n",
+    fprintf(stderr,
+            "Line %d. Semantic error: Can't operate(incompatible types).\n",
             current_line);
   return type;
 }
@@ -282,7 +293,8 @@ unsigned int ExistsFunctionID(char *id) {
 
 void ExistsFunction(attributes a) {
   if (!ExistsFunctionID(a.lexeme))
-    fprintf(stderr, "Line %d. Semantic error: Function '%s' does not exists, or out of scope.\n",
+    fprintf(stderr,
+            "Line %d. Semantic error: Function '%s' does not exists, or out of scope.\n",
             current_line, a.lexeme);
 }
 
@@ -308,7 +320,8 @@ void CheckParameters(attributes a, unsigned int pos) {
         a.type = real;
       }
       if (ST[tmp_top].parameters == 0) {
-        fprintf(stderr, "Line %d. Semantic error: '%s' does not have parameters.\n", current_line,
+        fprintf(stderr, "Line %d. Semantic error: '%s' does not have parameters.\n",
+                current_line,
                 ST[tmp_top].name);
       } else if (ST[tmp_top + pos].data_type != a.type) {
         fprintf(stderr, "Line %d. Semantic error: incompatible type of parameter %d..\n",
@@ -444,6 +457,7 @@ expression : LEFT_PAR expression RIGHT_PAR {$$ = $2;}
            | id_or_array_position {$$.type = AssignType($1); $$.type_array = AssignArrayType($1); strcpy($$.lexeme,$1.lexeme);}
            | CONSTANT {$$.type = $1.type; if($$.type == array)$$.type_array = $1.type_array; }
            | STRING
+//         | assign
            | aggregate
            | function_call
            | error;
