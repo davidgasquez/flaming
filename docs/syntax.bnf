@@ -1,82 +1,100 @@
-Copyright (c) 2015 David Gasquez - All Rights Reserved.
+Copyright (c) 2015 David Gasquez
+--------------------------------
 
-<program> ::= <program_header> <block>;
+Flaming BNF Syntax
+==================
 
-<program_header> ::= MAIN LEFT_PAR RIGHT_PAR;
+program : program_header block;
 
-<block> ::= LEFT_BRACE <local_var_declaration> <sub_programs_declaration> <sentences> RIGHT_BRACE
-          | LEFT_BRACE <local_var_declaration> <sentences> RIGHT_BRACE
-          | LEFT_BRACE <sub_programs_declaration> <sentences> RIGHT_BRACE
-          | LEFT_BRACE <sentences> RIGHT_BRACE
-          | LEFT_BRACE RIGHT_BRACE;
+program_header : MAIN LEFT_PAR RIGHT_PAR;
 
-<sub_programs_declaration> ::= <sub_programs_declaration> <sub_program>
-                             | <sub_program>;
+block : LEFT_BRACE local_var_declaration sub_programs_declaration sentences RIGHT_BRACE
 
-<sub_program> ::= <subprogram_header> <block> <return>;
+sub_programs_declaration : sub_programs_declaration sub_program
+                         | ;
 
-<subprogram_header> ::= TYPE ID LEFT_PAR <parameters> RIGHT_PAR
-                      | TYPE ID LEFT_PAR RIGHT_PAR;
+sub_program : subprogram_header block;
 
-<parameters> ::= <parameters> COMMA TYPE ID
-               | TYPE ID;
+subprogram_header : TYPE ID LEFT_PAR parameters RIGHT_PAR
+                  | TYPE ID LEFT_PAR RIGHT_PAR;
 
-<local_var_declaration> ::= LVDS <local_var_declarations> LVDE;
+parameters : parameters COMMA TYPE ID
+           | TYPE ID
+           | error;
 
-<local_var_declarations> ::= <local_var_declarations> <var_declaration>
-                           | <var_declaration>;
+local_var_declaration : LVDS local_var_declarations LVDE
+				              | ;
 
-<var_declaration> ::= TYPE <var_list> SEMICOLON;
+local_var_declarations : local_var_declarations var_declaration
+                       | var_declaration;
 
-<var_list> ::= <var_list> COMMA <id_or_array_id>
-             | <id_or_array_id>;
+var_declaration : TYPE var_list SEMICOLON
+                | error;
 
-<id_or_array_id> ::= ID
-                   | <array_id>;
+var_list : var_list COMMA id_or_array_id
+         | id_or_array_id
+         | error;
 
-<array_id> ::= ID LEFT_BRACKET CONSTANT RIGHT_BRACKET
-             | ID LEFT_BRACKET CONSTANT COMMA CONSTANT RIGHT_BRACKET;
+id_or_array_id : ID
+               | array_id;
 
-<sentences> ::= <sentences> <sentence>
-              | <sentence>;
+array_id : ID LEFT_BRACKET CONSTANT RIGHT_BRACKET
+         | ID LEFT_BRACKET CONSTANT COMMA CONSTANT RIGHT_BRACKET;
 
-<sentence> ::= <block>
-             | <assign>
-             | <if>
-             | <while>
-             | <do_until>
-             | <input>
-             | <output>
-             | <return>;
+id_or_array_position : ID
+					           | ID LEFT_BRACKET expression RIGHT_BRACKET
+					           | ID LEFT_BRACKET expression COMMA expression RIGHT_BRACKET;
 
-<assign> ::= ID ASSIGN <expression> SEMICOLON;
+sentences : sentences sentence
+          | sentence;
 
-<if> ::= IF LEFT_PAR <expression> RIGHT_PAR <sentence>
-       | IF LEFT_PAR <expression> RIGHT_PAR <sentence> <else>;
+sentence : block
+         | assign
+         | if
+         | while
+         | do_until
+         | input
+         | output
+         | return
+         | error;
 
-<else> ::= ELSE <sentence>;
+assign : id_or_array_position ASSIGN expression SEMICOLON;
 
-<while> ::= WHILE LEFT_PAR <expression> RIGHT_PAR <sentence>;
+if : IF LEFT_PAR expression RIGHT_PAR sentence
+   | IF LEFT_PAR expression RIGHT_PAR sentence else;
 
-<do_until> ::= DO <sentence> UNTIL LEFT_PAR <expression> RIGHT_PAR SEMICOLON;
+else : ELSE sentence;
 
-<input> ::= INPUT <var_list> SEMICOLON;
+while : WHILE LEFT_PAR expression RIGHT_PAR LEFT_BRACE sentences RIGHT_BRACE;
 
-<output> ::= OUPUT <expression> SEMICOLON;
+do_until : DO expression UNTIL LEFT_PAR expression RIGHT_PAR SEMICOLON;
 
-<return> ::= RETURN <expression> SEMICOLON;
+input : INPUT var_list SEMICOLON;
 
-<expression_list> ::= <expression_list> COMMA <expression>
-                    | <expression>;
+output : OUPUT expression SEMICOLON;
 
-<expression> ::= LEFT_PAR <expression> RIGHT_PAR
-               | UNARY_OPERATOR <expression>
-               | <expression> BINARY_OPERATOR <expression>
-               | <expression> PLUS_OR_MINUS_OPERATOR <expression>
-               | PLUS_OR_MINUS_OPERATOR <expression>
-               | <id_or_array_id>
-               | CONSTANT
-               | STRING
-               | <function_call>;
+return : RETURN expression SEMICOLON;
 
-<function_call> ::= ID LEFT_PAR <expression_list> RIGHT_PAR;
+expression_list : expression_list COMMA expression
+                | expression;
+
+expression : LEFT_PAR expression RIGHT_PAR
+           | UNARY_OPERATOR expression
+           | expression BINARY_OPERATOR expression
+           | expression PLUS_OR_MINUS_OPERATOR expression
+           | PLUS_OR_MINUS_OPERATOR expression
+           | id_or_array_position
+           | CONSTANT
+           | STRING
+           | aggregate
+           | function_call
+           | error;
+
+constants_list: constants_list COMMA CONSTANT
+              | constants_list SEMICOLON CONSTANT
+              | CONSTANT;
+
+aggregate : LEFT_BRACKET constants_list RIGHT_BRACKET;
+
+function_call : ID LEFT_PAR expression_list RIGHT_PAR
+							| ID LEFT_PAR RIGHT_PAR;
