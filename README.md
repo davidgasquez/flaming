@@ -2,7 +2,7 @@
 --------
 A language compiler with C style syntax.
 
-**Note**: *Flaming is still in the design stage. It's not working yet.*
+**Note**: *Flaming was created to learn about Lex and Bison. It does not work.*
 
 [![GitHub license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/davidgasquez/flaming)
 
