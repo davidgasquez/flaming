@@ -44,7 +44,7 @@ main(){
 
 		float functionD(float d1) {
 			LVDS
-				char d1;
+				char d3;
 				int d2;
 			LVDE
 
@@ -69,12 +69,14 @@ main(){
 				LVDE
 
 				data = 2;
-				data = value * 20 /data;
+				data = d2 * 20 /data;
 			} else {
-				value = value *100;
+				d2 = d2 *100;
 				d1 = d1 / 1000.0;
 			}
 			return d1;
 		}
-	}
+    return x1;
+  }
+  do (1+2+3+4) until (a < 100);
 }
